@@ -17,6 +17,7 @@
  * 
  * References:
  * http://www.avrbeginners.net/architecture/timers/timers.html
+ * http://sphinx.mythic-beasts.com/~markt/ATmega-timers.html
  */
 void setupIRReceiver() {
   // Setting up Timer/Counter Control register TCCR1A:
@@ -137,8 +138,8 @@ void reset_timer() {
  */
 void recvCommand() {
   byte change_count = 0;
-  unsigned int TimerValue[SAMPLE_SIZE];
-  char direction[SAMPLE_SIZE];
+  unsigned int timer_value[SAMPLE_SIZE];
+  byte previous_level;
   long current_time;
   long previous_time;
   long duration;
@@ -150,34 +151,33 @@ void recvCommand() {
   while(digitalRead(IRpin) == HIGH) {}
   
   reset_timer();
-  TimerValue[change_count] = TCNT1;
-  direction[change_count++] = '0';
+  timer_value[change_count] = TCNT1;
+  previous_level = HIGH;
+  change_count++;
   while (change_count < SAMPLE_SIZE) {
-    if (direction[change_count-1] == '0') {
+    if (previous_level == HIGH) {
       while (digitalRead(IRpin) == LOW) {}
-      TimerValue[change_count] = TCNT1;
-      direction[change_count++] = '1';
+      timer_value[change_count] = TCNT1;
+      previous_level = LOW;
+      change_count++;
     } else {
       while (digitalRead(IRpin) == HIGH) {}
-      TimerValue[change_count] = TCNT1;
-      direction[change_count++] = '0';
+      timer_value[change_count] = TCNT1;
+      previous_level = HIGH;
+      change_count++;
     }
   }
 
-  change_count = 1;
-  received_count = 0;
-  while (change_count < SAMPLE_SIZE) {
-    if (direction[change_count] == '0') {
-      current_time = (long)TimerValue[change_count]*4;
-      previous_time = (long)TimerValue[change_count-1]*4;
-      duration = current_time - previous_time;
-      demodulated_value = demodulate(duration);
-      
-      if (demodulated_value != -1){
-        receivedData[received_count] = demodulated_value;
-        received_count++;
-      }
-    }
-    change_count++;
+  // Transmits bits through serial output
+  // Keep in mind that it always starts in LOW,
+  // i.e., the first timer value is always w.r.t. 0.
+  if (DEBUG) {
+    Serial.println("START");
+    
+    int i;
+    for (i = 0; i < SAMPLE_SIZE - 1; i++)
+      Serial.println(timer_value[i]);
+    
+    Serial.println("END");
   }
 }

@@ -42,32 +42,35 @@ class BitStream(object):
 
 class BitStreamPlotter(object):
     def __init__(self):
-        self.bit_stream = None
+        self.previous_bit_stream = None
 
     def plot(self, bit_stream):
-        x = []
-        y = []
-        bit = None
+        if self.previous_bit_stream != bit_stream.to_list():
+            self.previous_bit_stream = bit_stream
 
-        for bit_time in bit_stream.to_list():
-            if bit is None:
-                x.append(bit_time)
-                y.append(0)
-                bit = 0
-            elif bit == 0:
-                x.extend([bit_time, bit_time])
-                y.extend([0, 1])
-                bit = 1
-            elif bit == 1:
-                x.extend([bit_time, bit_time])
-                y.extend([1, 0])
-                bit = 0
+            x = []
+            y = []
+            bit = None
 
-        plt.clf()
-        plt.plot(x, y)
-        plt.ylim([-0.1, 1.1])
-        plt.show()
-        plt.pause(0.005)
+            for bit_time in bit_stream.to_list():
+                if bit is None:
+                    x.append(bit_time)
+                    y.append(0)
+                    bit = 0
+                elif bit == 0:
+                    x.extend([bit_time, bit_time])
+                    y.extend([0, 1])
+                    bit = 1
+                elif bit == 1:
+                    x.extend([bit_time, bit_time])
+                    y.extend([1, 0])
+                    bit = 0
+
+            plt.clf()
+            plt.plot(x, y)
+            plt.ylim([-0.1, 1.1])
+            plt.show()
+            plt.pause(0.005)
 
 
 def main():

@@ -171,13 +171,11 @@ void recvCommand() {
   // Transmits bits through serial output
   // Keep in mind that it always starts in LOW,
   // i.e., the first timer value is always w.r.t. 0.
-  if (DEBUG) {
-    Serial.println("START");
+  Serial.println("START");
     
-    int i;
-    for (i = 0; i < SAMPLE_SIZE - 1; i++)
-      Serial.println(timer_value[i]);
+  int i;
+  for (i = 0; i < SAMPLE_SIZE - 1; i++)
+    Serial.println(timer_value[i]);
     
-    Serial.println("END");
-  }
+  Serial.println("END");
 }

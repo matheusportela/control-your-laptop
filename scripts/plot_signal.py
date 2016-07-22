@@ -2,11 +2,12 @@ import threading
 import time
 
 import matplotlib.pylab as plt
+import numpy as np
 import serial
 
 plt.ion()
 
-ARDUINO_ADDR = '/dev/cu.usbmodem1411'
+ARDUINO_ADDR = '/dev/cu.usbmodem1421'
 ARDUINO_BAUD_RATE = 115200
 
 
@@ -39,6 +40,16 @@ class BitStream(object):
     def to_list(self):
         return self.bits
 
+    def calculate_differences(self):
+        differences = []
+        previous_time = 0
+
+        for bit_time in self.to_list():
+            differences.append(bit_time - previous_time)
+            previous_time = bit_time
+
+        return differences
+
 
 class BitStreamPlotter(object):
     def __init__(self):
@@ -68,14 +79,23 @@ class BitStreamPlotter(object):
 
             plt.clf()
             plt.plot(x, y)
+            plt.xlim([0, 10000])
             plt.ylim([-0.1, 1.1])
             plt.show()
             plt.pause(0.005)
 
 
+def calculate_cosine(stream1, stream2):
+    x = np.array(stream1.to_list())
+    y = np.array(stream2.to_list())
+
+    return np.dot(x, y)/(np.linalg.norm(x) * np.linalg.norm(y))
+
+
 def main():
     arduino = serial.Serial(ARDUINO_ADDR, ARDUINO_BAUD_RATE)
-    bit_stream = BitStream()
+    bit_stream = None
+    previous_bit_stream = None
     bit_plotter = BitStreamPlotter()
 
     try:
@@ -83,10 +103,18 @@ def main():
             data = arduino.readline().rstrip('\r\n')
 
             if data == 'START':
+                if bit_stream:
+                    previous_bit_stream = bit_stream
+
+                bit_stream = BitStream()
                 bit_stream.start_receiving()
             elif data == 'END':
                 bit_stream.stop_receiving()
                 bit_plotter.plot(bit_stream)
+                print len(bit_stream.calculate_differences())
+
+                if previous_bit_stream:
+                    print calculate_cosine(bit_stream, previous_bit_stream)
             else:
                 bit_stream.receive(data)
     except KeyboardInterrupt:

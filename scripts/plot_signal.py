@@ -92,6 +92,25 @@ def calculate_cosine(stream1, stream2):
     return np.dot(x, y)/(np.linalg.norm(x) * np.linalg.norm(y))
 
 
+def decode(bit_stream):
+    differences = bit_stream.calculate_differences()[1:]
+    period = differences[0]/2.0
+
+    bits = []
+    bit = 1
+
+    for difference in differences[1:]:
+        num_periods = int(round(difference/period))
+
+        if num_periods >= 3:
+            break
+
+        bits.extend([bit] * num_periods)
+        bit = 0 if bit == 1 else 1
+
+    return bits
+
+
 def main():
     arduino = serial.Serial(ARDUINO_ADDR, ARDUINO_BAUD_RATE)
     bit_stream = None
@@ -111,7 +130,7 @@ def main():
             elif data == 'END':
                 bit_stream.stop_receiving()
                 bit_plotter.plot(bit_stream)
-                print len(bit_stream.calculate_differences())
+                bits = decode(bit_stream)
 
                 if previous_bit_stream:
                     print calculate_cosine(bit_stream, previous_bit_stream)

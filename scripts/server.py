@@ -1,5 +1,6 @@
 import sys
 import os
+import pickle
 
 import serial
 
@@ -111,7 +112,6 @@ def receive_bits():
 
 class CLI(object):
     def __init__(self):
-        self.command_container = CommandContainer()
         self.cli_commands = {
             'r': self.receive_commands,
             'c': self.configure_commands,
@@ -123,6 +123,21 @@ class CLI(object):
             'stop': self.stop,
             'pause': self.pause,
         }
+        self.config_file = '.control_your_laptop'
+        self.load_commands()
+
+    def save_commands(self):
+        with open(self.config_file, 'w') as f:
+            pickle.dump(self.command_container, f)
+        print 'Saved commands to "{}"'.format(self.config_file)
+
+    def load_commands(self):
+        try:
+            with open(self.config_file) as f:
+                self.command_container = pickle.load(f)
+            print 'Loaded commands from "{}"'.format(self.config_file)
+        except IOError:
+            self.command_container = CommandContainer()
 
     def run(self):
         self.help()
@@ -139,7 +154,7 @@ class CLI(object):
 
                 method()
         except KeyboardInterrupt:
-            print '\nQuitting Control Your Computer'
+            print '\nBye!'
 
     def help(self):
         print
@@ -163,6 +178,8 @@ class CLI(object):
 
         for command in self.control_commands.keys():
             self.set_command(command)
+
+        self.save_commands()
 
         print 'Successfully configured commands'
 

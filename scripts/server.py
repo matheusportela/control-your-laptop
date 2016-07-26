@@ -5,11 +5,14 @@ import pickle
 import serial
 
 
-ARDUINO_ADDR = '/dev/cu.usbmodem1411'
+ARDUINO_ADDRS = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421']
 ARDUINO_BAUD_RATE = 115200
 
 
 class UnknownCommand(Exception):
+    pass
+
+class NoArduinoFound(Exception):
     pass
 
 
@@ -92,26 +95,38 @@ class CommandContainer(object):
             raise UnknownCommand
 
 
-def receive_bits():
-    arduino = serial.Serial(ARDUINO_ADDR, ARDUINO_BAUD_RATE)
-    bit_stream = BitStream()
+class BitReceiver(object):
+    def __init__(self):
+        self.bit_stream = BitStream()
+        self.arduino = self.get_arduino()
 
-    while True:
-        data = arduino.readline().rstrip('\r\n')
+    def get_arduino(self):
+        for arduino_addr in ARDUINO_ADDRS:
+            try:
+                return serial.Serial(arduino_addr, ARDUINO_BAUD_RATE)
+            except serial.serialutil.SerialException:
+                pass
 
-        if data == 'START':
-            bit_stream.start_receiving()
-        elif data == 'END':
-            bit_stream.stop_receiving()
-            break
-        else:
-            bit_stream.receive(data)
+        raise NoArduinoFound
 
-    return decode(bit_stream)
+    def receive_bits(self):
+        while True:
+            data = self.arduino.readline().rstrip('\r\n')
+
+            if data == 'START':
+                self.bit_stream.start_receiving()
+            elif data == 'END':
+                self.bit_stream.stop_receiving()
+                break
+            else:
+                self.bit_stream.receive(data)
+
+        return decode(self.bit_stream)
 
 
 class CLI(object):
     def __init__(self):
+        self.bit_receiver = BitReceiver()
         self.cli_commands = {
             'r': self.receive_commands,
             'c': self.configure_commands,
@@ -176,7 +191,7 @@ class CLI(object):
 
         # Ignore first 2 streams received as they usually are garbage
         for _ in range(2):
-            receive_bits()
+            self.bit_receiver.receive_bits()
 
         for command in self.control_commands.keys():
             self.set_command(command)
@@ -190,7 +205,7 @@ class CLI(object):
 
         # Set 2 signals to include the bit flip
         for _ in range(2):
-            bits = receive_bits()
+            bits = self.bit_receiver.receive_bits()
             print bits
 
             self.command_container.set_command(bits, command)
@@ -198,7 +213,7 @@ class CLI(object):
     def receive_commands(self):
         try:
             while True:
-                bits = receive_bits()
+                bits = self.bit_receiver.receive_bits()
                 print bits
 
                 try:

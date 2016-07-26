@@ -7,7 +7,7 @@ import serial
 
 plt.ion()
 
-ARDUINO_ADDR = '/dev/cu.usbmodem1421'
+ARDUINO_ADDR = '/dev/cu.usbmodem1411'
 ARDUINO_BAUD_RATE = 115200
 
 

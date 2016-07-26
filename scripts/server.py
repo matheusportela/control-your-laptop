@@ -106,54 +106,65 @@ def receive_bits():
 class CLI(object):
     def __init__(self):
         self.command_container = CommandContainer()
-
-    def run(self):
-        commands = {
-            's': self.set_command,
+        self.cli_commands = {
             'r': self.receive_commands,
+            'c': self.configure_commands,
             'h': self.help,
             'q': self.quit,
         }
+        self.control_commands = {
+            'play': None,
+            'stop': None,
+            'pause': None,
+        }
 
+    def run(self):
         self.help()
 
         while True:
-            command = str(raw_input('>>> ')).lower()
+            command = str(raw_input('~> ')).lower()
 
-            if command in commands:
-                method = commands[command]
+            if command in self.cli_commands:
+                method = self.cli_commands[command]
             else:
-                method = commands['h']
+                print 'Unknown command "{}"'.format(command)
+                method = self.help
 
             method()
 
     def help(self):
+        print
         print 'Control Your Computer'
         print
         print '===== Commands ====='
-        print 's: Set command'
         print 'r: Receive commands'
+        print 'c: Configure commands'
         print 'h: Help'
         print 'q: Quit'
 
     def quit(self):
         sys.exit()
 
-    def set_command(self):
-        print 'Setting commands:'
-
-        print 'OK'
+    def configure_commands(self):
+        print 'Configuring commands'
 
         # Ignore first 2 streams received as they usually are garbage
         for _ in range(2):
             receive_bits()
 
-        # Set next 2 to include the bit flip
+        for command in self.control_commands.keys():
+            self.set_command(command)
+
+        print 'Successfully configured commands'
+
+    def set_command(self, command):
+        print 'Configuring command:', command
+
+        # Set 2 signals to include the bit flip
         for _ in range(2):
             bits = receive_bits()
-            self.command_container.set_command(bits, 'OK')
-
-        print 'OK:', bits
+            print bits
+            self.command_container.set_command(bits, command)
 
     def receive_commands(self):
         try:

@@ -12,6 +12,7 @@ ARDUINO_BAUD_RATE = 115200
 class UnknownCommand(Exception):
     pass
 
+
 class NoArduinoFound(Exception):
     pass
 

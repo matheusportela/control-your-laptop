@@ -7,6 +7,10 @@ ARDUINO_ADDR = '/dev/cu.usbmodem1411'
 ARDUINO_BAUD_RATE = 115200
 
 
+class UnknownCommand(Exception):
+    pass
+
+
 class BitStream(object):
     IDLE = 0
     RECEIVING = 1
@@ -80,9 +84,10 @@ class CommandContainer(object):
     def get_command(self, bits):
         key = self.make_key(bits)
 
-        if key in self.commands:
+        try:
             return self.commands[key]
-        return 'Unknown'
+        except KeyError:
+            raise UnknownCommand
 
 
 def receive_bits():
@@ -113,24 +118,27 @@ class CLI(object):
             'q': self.quit,
         }
         self.control_commands = {
-            'play': None,
-            'stop': None,
-            'pause': None,
+            'play': self.play,
+            'stop': self.stop,
+            'pause': self.pause,
         }
 
     def run(self):
         self.help()
 
-        while True:
-            command = str(raw_input('~> ')).lower()
+        try:
+            while True:
+                command = str(raw_input('~> ')).lower()
 
-            if command in self.cli_commands:
-                method = self.cli_commands[command]
-            else:
-                print 'Unknown command "{}"'.format(command)
-                method = self.help
+                try:
+                    method = self.cli_commands[command]
+                except KeyError:
+                    print 'Unknown command "{}"'.format(command)
+                    method = self.help
 
-            method()
+                method()
+        except KeyboardInterrupt:
+            print '\nQuitting'
 
     def help(self):
         print
@@ -164,15 +172,32 @@ class CLI(object):
         for _ in range(2):
             bits = receive_bits()
             print bits
+
             self.command_container.set_command(bits, command)
 
     def receive_commands(self):
         try:
             while True:
                 bits = receive_bits()
-                print 'Received command:', self.command_container.get_command(bits), bits
+                print bits
+
+                try:
+                    command = self.command_container.get_command(bits)
+                    command_method = self.control_commands[command]
+                    command_method()
+                except UnknownCommand:
+                    print 'Unknown command'
         except KeyboardInterrupt:
             print 'Exiting'
+
+    def play(self):
+        print 'Play command'
+
+    def stop(self):
+        print 'Stop command'
+
+    def pause(self):
+        print 'Pause command'
 
 
 def main():

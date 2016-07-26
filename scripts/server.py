@@ -1,3 +1,4 @@
+import collections
 import sys
 import os
 import pickle
@@ -134,13 +135,13 @@ class CLI(object):
             'h': self.help,
             'q': self.quit,
         }
-        self.control_commands = {
-            'play': self.play,
-            'stop': self.stop,
-            'pause': self.pause,
-            'backward': self.backward,
-            'forward': self.forward,
-        }
+        self.control_commands = collections.OrderedDict()
+        self.control_commands['play'] = self.play
+        self.control_commands['stop'] = self.stop
+        self.control_commands['pause'] = self.pause
+        self.control_commands['backward'] = self.backward
+        self.control_commands['forward'] = self.forward
+
         self.config_file = '.control_your_laptop'
         self.load_commands()
 
@@ -212,6 +213,8 @@ class CLI(object):
             self.command_container.set_command(bits, command)
 
     def receive_commands(self):
+        print 'Receiving commands'
+
         try:
             while True:
                 bits = self.bit_receiver.receive_bits()

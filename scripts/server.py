@@ -122,6 +122,8 @@ class CLI(object):
             'play': self.play,
             'stop': self.stop,
             'pause': self.pause,
+            'backward': self.backward,
+            'forward': self.forward,
         }
         self.config_file = '.control_your_laptop'
         self.load_commands()
@@ -237,6 +239,28 @@ class CLI(object):
           tell application "VLC" to activate
           delay(0.5)
           tell process "VLC" to keystroke space
+        end tell
+        '''
+        os.system('osascript -e \'' + cmd + '\'')
+
+    def backward(self):
+        print 'Backward'
+        cmd = '''
+        tell application "System Events"
+          tell application "VLC" to activate
+          delay(0.5)
+          tell process "VLC" to key code 123 using {command down, option down}
+        end tell
+        '''
+        os.system('osascript -e \'' + cmd + '\'')
+
+    def forward(self):
+        print 'Forward'
+        cmd = '''
+        tell application "System Events"
+          tell application "VLC" to activate
+          delay(0.5)
+          tell process "VLC" to key code 124 using {command down, option down}
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')

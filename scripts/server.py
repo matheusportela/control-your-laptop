@@ -233,9 +233,9 @@ class CLI(object):
         print 'Play'
         cmd = '''
         tell application "System Events"
-          tell application "VLC" to activate
-          delay(0.5)
-          tell process "VLC" to keystroke space
+            set frontApp to first application process whose frontmost is true
+            set frontAppName to name of frontApp
+            tell process frontAppName to keystroke space
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')
@@ -244,9 +244,9 @@ class CLI(object):
         print 'Stop'
         cmd = '''
         tell application "System Events"
-          tell application "VLC" to activate
-          delay(0.5)
-          tell process "VLC" to key code 47 using command down
+            set frontApp to first application process whose frontmost is true
+            set frontAppName to name of frontApp
+            tell process frontAppName to key code 47 using command down
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')
@@ -255,9 +255,9 @@ class CLI(object):
         print 'Pause'
         cmd = '''
         tell application "System Events"
-          tell application "VLC" to activate
-          delay(0.5)
-          tell process "VLC" to keystroke space
+            set frontApp to first application process whose frontmost is true
+            set frontAppName to name of frontApp
+            tell process frontAppName to keystroke space
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')
@@ -266,9 +266,9 @@ class CLI(object):
         print 'Backward'
         cmd = '''
         tell application "System Events"
-          tell application "VLC" to activate
-          delay(0.5)
-          tell process "VLC" to key code 123 using {command down, option down}
+            set frontApp to first application process whose frontmost is true
+            set frontAppName to name of frontApp
+            tell process frontAppName to key code 123 using {command down, option down}
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')
@@ -277,9 +277,9 @@ class CLI(object):
         print 'Forward'
         cmd = '''
         tell application "System Events"
-          tell application "VLC" to activate
-          delay(0.5)
-          tell process "VLC" to key code 124 using {command down, option down}
+            set frontApp to first application process whose frontmost is true
+            set frontAppName to name of frontApp
+            tell process frontAppName to key code 124 using {command down, option down}
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')

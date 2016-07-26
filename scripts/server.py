@@ -1,4 +1,5 @@
 import sys
+import os
 
 import serial
 
@@ -138,7 +139,7 @@ class CLI(object):
 
                 method()
         except KeyboardInterrupt:
-            print '\nQuitting'
+            print '\nQuitting Control Your Computer'
 
     def help(self):
         print
@@ -188,16 +189,40 @@ class CLI(object):
                 except UnknownCommand:
                     print 'Unknown command'
         except KeyboardInterrupt:
-            print 'Exiting'
+            print 'Stop receiving commands'
 
     def play(self):
-        print 'Play command'
+        print 'Play'
+        cmd = '''
+        tell application "System Events"
+          tell application "VLC" to activate
+          delay(0.5)
+          tell process "VLC" to keystroke space
+        end tell
+        '''
+        os.system('osascript -e \'' + cmd + '\'')
 
     def stop(self):
-        print 'Stop command'
+        print 'Stop'
+        cmd = '''
+        tell application "System Events"
+          tell application "VLC" to activate
+          delay(0.5)
+          tell process "VLC" to key code 47 using command down
+        end tell
+        '''
+        os.system('osascript -e \'' + cmd + '\'')
 
     def pause(self):
-        print 'Pause command'
+        print 'Pause'
+        cmd = '''
+        tell application "System Events"
+          tell application "VLC" to activate
+          delay(0.5)
+          tell process "VLC" to keystroke space
+        end tell
+        '''
+        os.system('osascript -e \'' + cmd + '\'')
 
 
 def main():

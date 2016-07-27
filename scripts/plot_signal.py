@@ -7,7 +7,7 @@ import serial
 
 plt.ion()
 
-ARDUINO_ADDR = '/dev/cu.usbmodem1411'
+ARDUINO_ADDR = '/dev/cu.wchusbserial1410'
 ARDUINO_BAUD_RATE = 115200
 
 
@@ -85,13 +85,6 @@ class BitStreamPlotter(object):
             plt.pause(0.005)
 
 
-def calculate_cosine(stream1, stream2):
-    x = np.array(stream1.to_list())
-    y = np.array(stream2.to_list())
-
-    return np.dot(x, y)/(np.linalg.norm(x) * np.linalg.norm(y))
-
-
 def decode(bit_stream):
     differences = bit_stream.calculate_differences()[1:]
     period = differences[0]/2.0
@@ -114,7 +107,6 @@ def decode(bit_stream):
 def main():
     arduino = serial.Serial(ARDUINO_ADDR, ARDUINO_BAUD_RATE)
     bit_stream = None
-    previous_bit_stream = None
     bit_plotter = BitStreamPlotter()
 
     try:
@@ -122,18 +114,12 @@ def main():
             data = arduino.readline().rstrip('\r\n')
 
             if data == 'START':
-                if bit_stream:
-                    previous_bit_stream = bit_stream
-
                 bit_stream = BitStream()
                 bit_stream.start_receiving()
             elif data == 'END':
                 bit_stream.stop_receiving()
                 bit_plotter.plot(bit_stream)
                 bits = decode(bit_stream)
-
-                if previous_bit_stream:
-                    print calculate_cosine(bit_stream, previous_bit_stream)
             else:
                 bit_stream.receive(data)
     except KeyboardInterrupt:

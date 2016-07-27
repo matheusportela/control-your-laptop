@@ -14,10 +14,7 @@ int IRpin = 2;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Control Your Laptop");
-  Serial.print("Setting up... ");
   setupIRReceiver();
-  Serial.println("done");
 }
 
 void loop() {

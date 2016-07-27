@@ -128,8 +128,12 @@ int demodulate(long duration) {
 /**
  * Reset timer counter.
  */
-void reset_timer() {
+void resetTimer() {
   TCNT1 = 0;
+}
+
+int getTime() {
+  return TCNT1;
 }
 
 /**
@@ -150,19 +154,19 @@ void recvCommand() {
   // about to be received.
   while(digitalRead(IRpin) == HIGH) {}
   
-  reset_timer();
-  timer_value[change_count] = TCNT1;
+  resetTimer();
+  timer_value[change_count] = getTime();
   previous_level = HIGH;
   change_count++;
   while (change_count < SAMPLE_SIZE) {
     if (previous_level == HIGH) {
       while (digitalRead(IRpin) == LOW) {}
-      timer_value[change_count] = TCNT1;
+      timer_value[change_count] = getTime();
       previous_level = LOW;
       change_count++;
     } else {
       while (digitalRead(IRpin) == HIGH) {}
-      timer_value[change_count] = TCNT1;
+      timer_value[change_count] = getTime();
       previous_level = HIGH;
       change_count++;
     }

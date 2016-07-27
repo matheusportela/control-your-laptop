@@ -10,7 +10,7 @@
 #define SLEEP_TIME 1000
 
 // Arduino pin to receive IR signals
-int IRpin = 2;
+int IRpin = 12;
 
 void setup() {
   Serial.begin(115200);

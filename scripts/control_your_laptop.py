@@ -7,7 +7,7 @@ import serial
 
 
 ARDUINO_ADDRS = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421',
-                 '/dev/cu.wchusbserial1410']
+                 '/dev/cu.wchusbserial1410', '/dev/cu.wchusbserial1420']
 ARDUINO_BAUD_RATE = 115200
 
 

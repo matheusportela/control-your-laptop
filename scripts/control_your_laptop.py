@@ -1,4 +1,5 @@
 import collections
+import glob
 import sys
 import os
 import pickle
@@ -6,8 +7,7 @@ import pickle
 import serial
 
 
-ARDUINO_ADDRS = ['/dev/cu.usbmodem1411', '/dev/cu.usbmodem1421',
-                 '/dev/cu.wchusbserial1410', '/dev/cu.wchusbserial1420']
+ARDUINO_PATH = '/dev/cu.usbserial*'
 ARDUINO_BAUD_RATE = 115200
 
 
@@ -104,7 +104,7 @@ class BitReceiver:
         self.arduino = self.get_arduino()
 
     def get_arduino(self):
-        for arduino_addr in ARDUINO_ADDRS:
+        for arduino_addr in glob.glob(ARDUINO_PATH):
             try:
                 return serial.Serial(arduino_addr, ARDUINO_BAUD_RATE)
             except serial.SerialException:
@@ -114,7 +114,7 @@ class BitReceiver:
 
     def receive_bits(self):
         while True:
-            data = self.arduino.readline().rstrip('\r\n')
+            data = self.arduino.readline().rstrip(b'\r\n')
 
             if data == 'START':
                 self.bit_stream.start_receiving()
@@ -164,7 +164,7 @@ class CLI:
 
         try:
             while True:
-                command = str(raw_input('~> ')).lower()
+                command = input('~> ').lower()
 
                 try:
                     method = self.cli_commands[command]

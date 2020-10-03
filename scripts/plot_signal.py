@@ -1,3 +1,5 @@
+import glob
+import math
 import threading
 import time
 
@@ -7,7 +9,7 @@ import serial
 
 plt.ion()
 
-ARDUINO_ADDR = '/dev/cu.wchusbserial1410'
+ARDUINO_PATH = '/dev/cu.usbserial*'
 ARDUINO_BAUD_RATE = 115200
 
 
@@ -79,47 +81,49 @@ class BitStreamPlotter(object):
 
             plt.clf()
             plt.plot(x, y)
-            plt.xlim([0, 10000])
             plt.ylim([-0.1, 1.1])
             plt.show()
             plt.pause(0.005)
 
 
 def decode(bit_stream):
-    differences = bit_stream.calculate_differences()[1:]
-    period = differences[0]/2.0
-
+    differences = bit_stream.calculate_differences()
     bits = []
-    bit = 1
 
-    for difference in differences[1:]:
-        num_periods = int(round(difference/period))
-
-        if num_periods >= 3:
-            break
-
-        bits.extend([bit] * num_periods)
-        bit = 0 if bit == 1 else 1
+    for difference in differences:
+        if math.isclose(difference, 120, abs_tol=10):
+            bits.append(0)
+        elif math.isclose(difference, 400, abs_tol=10):
+            bits.append(1)
 
     return bits
 
+def get_arduino():
+    for arduino_addr in glob.glob(ARDUINO_PATH):
+        try:
+            return serial.Serial(arduino_addr, ARDUINO_BAUD_RATE)
+        except serial.SerialException:
+            pass
+
+    raise IOError
 
 def main():
-    arduino = serial.Serial(ARDUINO_ADDR, ARDUINO_BAUD_RATE)
+    arduino = get_arduino()
     bit_stream = None
     bit_plotter = BitStreamPlotter()
 
     try:
         while True:
-            data = arduino.readline().rstrip('\r\n')
+            data = arduino.readline().rstrip(b'\r\n')
 
-            if data == 'START':
+            if data == b'START':
                 bit_stream = BitStream()
                 bit_stream.start_receiving()
-            elif data == 'END':
+            elif data == b'END':
                 bit_stream.stop_receiving()
-                bit_plotter.plot(bit_stream)
                 bits = decode(bit_stream)
+                print(bits)
+                bit_plotter.plot(bit_stream)
             else:
                 bit_stream.receive(data)
     except KeyboardInterrupt:

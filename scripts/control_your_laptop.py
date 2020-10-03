@@ -1,14 +1,21 @@
 import collections
 import glob
-import sys
+import logging
+import math
 import os
 import pickle
+import sys
 
 import serial
 
 
 ARDUINO_PATH = '/dev/cu.usbserial*'
 ARDUINO_BAUD_RATE = 115200
+
+
+logging.basicConfig(format='%(asctime)s - %(message)s')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class UnknownCommand(Exception):
@@ -43,6 +50,7 @@ class BitStream:
 
     def receive(self, data):
         if self.is_receiving():
+            logger.debug(int(data))
             self.bits.append(int(data))
 
     def to_list(self):
@@ -56,24 +64,19 @@ class BitStream:
             differences.append(bit_time - previous_time)
             previous_time = bit_time
 
+        logger.debug(f'differences: {differences}')
         return differences
 
 
 def decode(bit_stream):
-    differences = bit_stream.calculate_differences()[1:]
-    period = differences[0]/2.0
-
+    differences = bit_stream.calculate_differences()
     bits = []
-    bit = 1
 
-    for difference in differences[1:]:
-        num_periods = int(round(difference/period))
-
-        if num_periods >= 3:
-            break
-
-        bits.extend([bit] * num_periods)
-        bit = 0 if bit == 1 else 1
+    for difference in differences:
+        if math.isclose(difference, 120, abs_tol=10):
+            bits.append(0)
+        elif math.isclose(difference, 400, abs_tol=10):
+            bits.append(1)
 
     return bits
 
@@ -116,9 +119,11 @@ class BitReceiver:
         while True:
             data = self.arduino.readline().rstrip(b'\r\n')
 
-            if data == 'START':
+            logger.debug(f'Received: {data}')
+
+            if data == b'START':
                 self.bit_stream.start_receiving()
-            elif data == 'END':
+            elif data == b'END':
                 self.bit_stream.stop_receiving()
                 break
             else:
@@ -147,13 +152,13 @@ class CLI:
         self.load_commands()
 
     def save_commands(self):
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, 'wb') as f:
             pickle.dump(self.command_container, f)
         print('Saved commands to "{}"'.format(self.config_file))
 
     def load_commands(self):
         try:
-            with open(self.config_file) as f:
+            with open(self.config_file, 'rb') as f:
                 self.command_container = pickle.load(f)
             print('Loaded commands from "{}"'.format(self.config_file))
         except IOError:
@@ -191,6 +196,7 @@ class CLI:
 
     def configure_commands(self):
         print('Configuring commands')
+        print('Press any button 2 times to start')
 
         # Ignore first 2 streams received as they usually are garbage
         for _ in range(2):
@@ -205,6 +211,7 @@ class CLI:
 
     def set_command(self, command):
         print('Configuring command:', command)
+        print('Press the button 2 times to configure')
 
         # Set 2 signals to include the bit flip
         for _ in range(2):
@@ -269,7 +276,7 @@ class CLI:
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
             set frontAppName to name of frontApp
-            tell process frontAppName to key code 123 using {command down, option down}
+            tell process frontAppName to keystroke "v"
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')
@@ -280,7 +287,7 @@ class CLI:
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
             set frontAppName to name of frontApp
-            tell process frontAppName to key code 124 using {command down, option down}
+            tell process frontAppName to keystroke "b"
         end tell
         '''
         os.system('osascript -e \'' + cmd + '\'')

@@ -19,7 +19,7 @@ class NoArduinoFound(Exception):
     pass
 
 
-class BitStream(object):
+class BitStream:
     IDLE = 0
     RECEIVING = 1
 
@@ -78,7 +78,7 @@ def decode(bit_stream):
     return bits
 
 
-class CommandContainer(object):
+class CommandContainer:
     def __init__(self):
         self.commands = {}
 
@@ -98,7 +98,7 @@ class CommandContainer(object):
             raise UnknownCommand
 
 
-class BitReceiver(object):
+class BitReceiver:
     def __init__(self):
         self.bit_stream = BitStream()
         self.arduino = self.get_arduino()
@@ -107,7 +107,7 @@ class BitReceiver(object):
         for arduino_addr in ARDUINO_ADDRS:
             try:
                 return serial.Serial(arduino_addr, ARDUINO_BAUD_RATE)
-            except serial.serialutil.SerialException:
+            except serial.SerialException:
                 pass
 
         raise NoArduinoFound
@@ -127,7 +127,7 @@ class BitReceiver(object):
         return decode(self.bit_stream)
 
 
-class CLI(object):
+class CLI:
     def __init__(self):
         self.bit_receiver = BitReceiver()
         self.cli_commands = {
@@ -149,13 +149,13 @@ class CLI(object):
     def save_commands(self):
         with open(self.config_file, 'w') as f:
             pickle.dump(self.command_container, f)
-        print 'Saved commands to "{}"'.format(self.config_file)
+        print('Saved commands to "{}"'.format(self.config_file))
 
     def load_commands(self):
         try:
             with open(self.config_file) as f:
                 self.command_container = pickle.load(f)
-            print 'Loaded commands from "{}"'.format(self.config_file)
+            print('Loaded commands from "{}"'.format(self.config_file))
         except IOError:
             self.command_container = CommandContainer()
 
@@ -169,28 +169,28 @@ class CLI(object):
                 try:
                     method = self.cli_commands[command]
                 except KeyError:
-                    print 'Unknown command "{}"'.format(command)
+                    print('Unknown command "{}"'.format(command))
                     method = self.help
 
                 method()
         except KeyboardInterrupt:
-            print '\nBye!'
+            print('\nBye!')
 
     def help(self):
         print
-        print 'Control Your Computer'
+        print('Control Your Computer')
         print
-        print '===== Commands ====='
-        print 'r: Receive commands'
-        print 'c: Configure commands'
-        print 'h: Help'
-        print 'q: Quit'
+        print('===== Commands =====')
+        print('r: Receive commands')
+        print('c: Configure commands')
+        print('h: Help')
+        print('q: Quit')
 
     def quit(self):
         sys.exit()
 
     def configure_commands(self):
-        print 'Configuring commands'
+        print('Configuring commands')
 
         # Ignore first 2 streams received as they usually are garbage
         for _ in range(2):
@@ -201,37 +201,37 @@ class CLI(object):
 
         self.save_commands()
 
-        print 'Successfully configured commands'
+        print('Successfully configured commands')
 
     def set_command(self, command):
-        print 'Configuring command:', command
+        print('Configuring command:', command)
 
         # Set 2 signals to include the bit flip
         for _ in range(2):
             bits = self.bit_receiver.receive_bits()
-            print bits
+            print(bits)
 
             self.command_container.set_command(bits, command)
 
     def receive_commands(self):
-        print 'Receiving commands'
+        print('Receiving commands')
 
         try:
             while True:
                 bits = self.bit_receiver.receive_bits()
-                print bits
+                print(bits)
 
                 try:
                     command = self.command_container.get_command(bits)
                     command_method = self.control_commands[command]
                     command_method()
                 except UnknownCommand:
-                    print 'Unknown command'
+                    print('Unknown command')
         except KeyboardInterrupt:
-            print 'Stop receiving commands'
+            print('Stop receiving commands')
 
     def play(self):
-        print 'Play'
+        print('Play')
         cmd = '''
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
@@ -242,7 +242,7 @@ class CLI(object):
         os.system('osascript -e \'' + cmd + '\'')
 
     def stop(self):
-        print 'Stop'
+        print('Stop')
         cmd = '''
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
@@ -253,7 +253,7 @@ class CLI(object):
         os.system('osascript -e \'' + cmd + '\'')
 
     def pause(self):
-        print 'Pause'
+        print('Pause')
         cmd = '''
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
@@ -264,7 +264,7 @@ class CLI(object):
         os.system('osascript -e \'' + cmd + '\'')
 
     def backward(self):
-        print 'Backward'
+        print('Backward')
         cmd = '''
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
@@ -275,7 +275,7 @@ class CLI(object):
         os.system('osascript -e \'' + cmd + '\'')
 
     def forward(self):
-        print 'Forward'
+        print('Forward')
         cmd = '''
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
